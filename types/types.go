@@ -67,3 +67,62 @@ type SiteConfig struct {
 	NoImageMode bool `json:"noImageMode"`
 	CompactMode bool `json:"compactMode"`
 }
+
+type ClickEvent struct {
+	Id        int    `json:"id"`
+	ToolId    int    `json:"toolId"`
+	ToolName  string `json:"toolName"`
+	Url       string `json:"url"`
+	Referrer  string `json:"referrer"`
+	UserAgent string `json:"userAgent"`
+	Ip        string `json:"ip"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type ClickStats struct {
+	ToolId    int    `json:"toolId"`
+	ToolName  string `json:"toolName"`
+	Clicks    int    `json:"clicks"`
+	Today     int    `json:"today"`
+	Week      int    `json:"week"`
+}
+
+type Affiliate struct {
+	Id           int    `json:"id"`
+	ToolId       int    `json:"toolId"`
+	ToolName     string `json:"toolName"`
+	OriginalUrl  string `json:"originalUrl"`
+	AffiliateUrl string `json:"affiliateUrl"`
+	Program      string `json:"program"`
+	Commission   string `json:"commission"`
+	Platform     string `json:"platform"`
+	Status       string `json:"status"`
+	Notes        string `json:"notes"`
+}
+
+type SearchLog struct {
+	Id        int    `json:"id"`
+	Query     string `json:"query"`
+	Results   int    `json:"results"`
+	Ip        string `json:"ip"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type SearchStats struct {
+	Query   string `json:"query"`
+	Count   int    `json:"count"`
+	Today   int    `json:"today"`
+	Week    int    `json:"week"`
+	AvgResults float64 `json:"avgResults"`
+}
+
+type ToolSubmission struct {
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Url       string `json:"url"`
+	Desc      string `json:"desc"`
+	Catelog   string `json:"catelog"`
+	Email     string `json:"email"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"createdAt"`
+}

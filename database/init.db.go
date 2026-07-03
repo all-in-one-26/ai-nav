@@ -183,6 +183,80 @@ func InitDB() {
 		DB.Exec(`ALTER TABLE nav_site_config ADD COLUMN compactMode BOOLEAN NOT NULL DEFAULT 0;`)
 	}
 	
+	// 点击追踪表
+	sql_create_table = `
+		CREATE TABLE IF NOT EXISTS nav_click (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			tool_id INTEGER NOT NULL,
+			tool_name TEXT NOT NULL DEFAULT '',
+			url TEXT NOT NULL DEFAULT '',
+			referrer TEXT NOT NULL DEFAULT '',
+			user_agent TEXT NOT NULL DEFAULT '',
+			ip TEXT NOT NULL DEFAULT '',
+			created_at DATETIME NOT NULL DEFAULT (datetime('now'))
+		);
+		`
+	_, err = DB.Exec(sql_create_table)
+	utils.CheckErr(err)
+
+	// 点击追踪索引
+	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_click_tool_id ON nav_click(tool_id);`)
+	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_click_created_at ON nav_click(created_at);`)
+
+	// 搜索日志表
+	sql_create_table = `
+		CREATE TABLE IF NOT EXISTS nav_search_log (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			query TEXT NOT NULL DEFAULT '',
+			results INTEGER NOT NULL DEFAULT 0,
+			ip TEXT NOT NULL DEFAULT '',
+			created_at DATETIME NOT NULL DEFAULT (datetime('now'))
+		);
+		`
+	_, err = DB.Exec(sql_create_table)
+	utils.CheckErr(err)
+	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_search_created_at ON nav_search_log(created_at);`)
+
+	// 工具提交表
+	sql_create_table = `
+		CREATE TABLE IF NOT EXISTS nav_tool_submission (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL DEFAULT '',
+			url TEXT NOT NULL DEFAULT '',
+			desc TEXT NOT NULL DEFAULT '',
+			catelog TEXT NOT NULL DEFAULT '',
+			email TEXT NOT NULL DEFAULT '',
+			status TEXT NOT NULL DEFAULT 'pending',
+			created_at DATETIME NOT NULL DEFAULT (datetime('now'))
+		);
+		`
+	_, err = DB.Exec(sql_create_table)
+	utils.CheckErr(err)
+
+	// tools 表添加 created_at 字段
+	if !columnExists("nav_table", "created_at") {
+		DB.Exec(`ALTER TABLE nav_table ADD COLUMN created_at DATETIME;`)
+		DB.Exec(`UPDATE nav_table SET created_at = datetime('now') WHERE created_at IS NULL;`)
+	}
+
+	// affiliate 表
+	sql_create_table = `
+		CREATE TABLE IF NOT EXISTS nav_affiliate (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			tool_id INTEGER NOT NULL,
+			tool_name TEXT NOT NULL DEFAULT '',
+			original_url TEXT NOT NULL DEFAULT '',
+			affiliate_url TEXT NOT NULL DEFAULT '',
+			program TEXT NOT NULL DEFAULT '',
+			commission TEXT NOT NULL DEFAULT '',
+			platform TEXT NOT NULL DEFAULT '',
+			status TEXT NOT NULL DEFAULT 'pending',
+			notes TEXT NOT NULL DEFAULT ''
+		);
+		`
+	_, err = DB.Exec(sql_create_table)
+	utils.CheckErr(err)
+
 	// 如果不存在，就初始化默认搜索引擎
 	sql_get_search_engine := `
 		SELECT COUNT(*) FROM nav_search_engine;

@@ -4,16 +4,18 @@ interface TagSelectorProps {
   tags: any;
   onTagChange: (newTag: string) => void;
   currTag: string;
+  onMenuClick?: () => void;
+  emojiMap?: Record<string, string>;
 }
 const TagSelector = (props: TagSelectorProps) => {
-  const { tags = ["all"], onTagChange, currTag } = props;
+  const { tags = ["all"], onTagChange, currTag, onMenuClick, emojiMap = {} } = props;
   const renderTags = useCallback(() => {
-    const originTags =  tags.map((each) => {
-      // 处理空分类，显示为"未分类"
-      const displayText = each === null || each === undefined || each === "" || (typeof each === 'string' && each.trim() === "") 
-        ? "未分类" 
+    return tags.map((each) => {
+      const displayText = each === null || each === undefined || each === "" || (typeof each === 'string' && each.trim() === "")
+        ? "未分类"
         : each;
-      
+      const emoji = emojiMap[each] || "";
+
       return (
         <span
           className={`select-tag ${
@@ -24,15 +26,25 @@ const TagSelector = (props: TagSelectorProps) => {
             onTagChange(each);
           }}
         >
-          {displayText}
+          {emoji && <span className="tag-emoji">{emoji}</span>}{displayText}
         </span>
       );
     });
-    return originTags;
-  }, [tags, onTagChange, currTag]);
+  }, [tags, onTagChange, currTag, emojiMap]);
   return (
     <div className="tag-selector span-3">
       <div className="tag-selector-wrapper">
+        {onMenuClick && (
+          <span className="select-tag tag-menu-btn" onClick={onMenuClick}>
+            ☰ 全部分类
+          </span>
+        )}
+        <span
+          className={`select-tag ${currTag === "全部工具" ? "select-tag-active" : ""}`}
+          onClick={() => onTagChange("全部工具")}
+        >
+          🏠 全部
+        </span>
         {renderTags()}
       </div>
     </div>

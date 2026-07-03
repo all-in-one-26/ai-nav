@@ -21,9 +21,15 @@ RUN apk --no-cache --no-progress add \
     tzdata && \
     cp "/usr/share/zoneinfo/$TZ" /etc/localtime && \
     echo "$TZ" >  /etc/timezone
+
+RUN adduser -D -u 1000 appuser
+
 WORKDIR /app
 COPY --from=binarybuilder /app/nav /app/
+RUN mkdir -p /app/data && chown -R appuser:appuser /app
+
+USER appuser
 
 VOLUME ["/app/data"]
-EXPOSE 6412
-ENTRYPOINT [ "/app/nav" ]
+EXPOSE 7860
+ENTRYPOINT [ "/app/nav", "-port", "7860" ]

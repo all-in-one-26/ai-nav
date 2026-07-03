@@ -191,3 +191,83 @@ export const fetchUpdateSearchEnginesSort = async (updates: { id: number; sort: 
     const { data } = await axios.put(`/api/admin/searchEngines/sort`, updates);
     return data?.data || {};
 };
+
+// ==================== Affiliate 管理接口 ====================
+
+export const fetchGetAllAffiliates = async () => {
+    const { data } = await axios.get(`/api/admin/affiliate`);
+    return data?.data || [];
+};
+
+export const fetchAddAffiliate = async (payload: any) => {
+    const { data } = await axios.post(`/api/admin/affiliate`, payload);
+    return data?.data || {};
+};
+
+export const fetchUpdateAffiliate = async (payload: any) => {
+    const { data } = await axios.put(`/api/admin/affiliate/${payload.id}`, payload);
+    return data?.data || {};
+};
+
+export const fetchDeleteAffiliate = async (id: number) => {
+    const { data } = await axios.delete(`/api/admin/affiliate/${id}`);
+    return data?.data || {};
+};
+
+export const fetchActivateAffiliate = async (id: number) => {
+    const { data } = await axios.post(`/api/admin/affiliate/activate/${id}`);
+    return data?.data || {};
+};
+
+// ==================== 点击追踪 ====================
+
+export const recordClick = (toolId: number, toolName: string, url: string) => {
+    const blob = new Blob([JSON.stringify({ toolId, toolName, url })], { type: 'application/json' });
+    navigator.sendBeacon('/api/click', blob);
+};
+
+export const fetchClickStats = async () => {
+    const { data } = await axios.get(`/api/admin/clicks`);
+    return data?.data || {};
+};
+
+// ==================== 搜索日志 ====================
+
+export const recordSearch = (query: string, results: number) => {
+    const blob = new Blob([JSON.stringify({ query, results })], { type: 'application/json' });
+    navigator.sendBeacon('/api/search', blob);
+};
+
+export const fetchSearchStats = async () => {
+    const { data } = await axios.get(`/api/admin/searches`);
+    return data?.data || {};
+};
+
+// ==================== Affiliate 批量导入 ====================
+
+export const fetchBatchAddAffiliates = async (affiliates: any[]) => {
+    const { data } = await axios.post(`/api/admin/affiliate/batch`, affiliates);
+    return data;
+};
+
+// ==================== 工具提交 ====================
+
+export const fetchSubmitTool = async (payload: { name: string; url: string; desc: string; catelog: string; email: string }) => {
+    const { data } = await axios.post(`/api/submit`, payload);
+    return data;
+};
+
+export const fetchGetSubmissions = async () => {
+    const { data } = await axios.get(`/api/admin/submissions`);
+    return data?.data || [];
+};
+
+export const fetchUpdateSubmissionStatus = async (id: number, status: string) => {
+    const { data } = await axios.put(`/api/admin/submission/${id}`, { status });
+    return data;
+};
+
+export const fetchDeleteSubmission = async (id: number) => {
+    const { data } = await axios.delete(`/api/admin/submission/${id}`);
+    return data;
+};

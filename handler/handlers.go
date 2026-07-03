@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -678,9 +679,438 @@ func UpdateSearchEngineSortHandler(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(200, gin.H{
 		"success": true,
 		"message": "更新排序成功",
+	})
+}
+
+// ==================== 点击追踪 ====================
+
+func RecordClickHandler(c *gin.Context) {
+	var body struct {
+		ToolId   int    `json:"toolId"`
+		ToolName string `json:"toolName"`
+		Url      string `json:"url"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	event := types.ClickEvent{
+		ToolId:    body.ToolId,
+		ToolName:  body.ToolName,
+		Url:       body.Url,
+		Referrer:  c.GetHeader("Referer"),
+		UserAgent: c.GetHeader("User-Agent"),
+		Ip:        c.ClientIP(),
+	}
+	if err := database.RecordClick(event); err != nil {
+		logger.LogError("记录点击失败: %v", err)
+	}
+	c.JSON(200, gin.H{"success": true})
+}
+
+func GetClickStatsHandler(c *gin.Context) {
+	stats, err := database.GetClickStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	total, today, week, _ := database.GetClickTotal()
+	c.JSON(200, gin.H{
+		"success": true,
+		"data": gin.H{
+			"stats": stats,
+			"total": total,
+			"today": today,
+			"week":  week,
+		},
+	})
+}
+
+// ==================== Affiliate 管理 ====================
+
+func GetAllAffiliatesHandler(c *gin.Context) {
+	affiliates, err := database.GetAllAffiliates()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    affiliates,
+	})
+}
+
+func AddAffiliateHandler(c *gin.Context) {
+	var a types.Affiliate
+	err := c.ShouldBindJSON(&a)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	id, err := database.AddAffiliate(a)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "添加 Affiliate 成功",
+		"data":    gin.H{"id": id},
+	})
+}
+
+func UpdateAffiliateHandler(c *gin.Context) {
+	var a types.Affiliate
+	err := c.ShouldBindJSON(&a)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "无效的ID",
+		})
+		return
+	}
+	a.Id = id
+
+	err = database.UpdateAffiliate(a)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "更新 Affiliate 成功",
+	})
+}
+
+func DeleteAffiliateHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "无效的ID",
+		})
+		return
+	}
+
+	err = database.DeleteAffiliate(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "删除 Affiliate 成功",
+	})
+}
+
+// ==================== 搜索日志 ====================
+
+func RecordSearchHandler(c *gin.Context) {
+	var body struct {
+		Query   string `json:"query"`
+		Results int    `json:"results"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	if body.Query == "" {
+		c.JSON(200, gin.H{"success": true})
+		return
+	}
+	if err := database.RecordSearch(body.Query, body.Results, c.ClientIP()); err != nil {
+		logger.LogError("记录搜索失败: %v", err)
+	}
+	c.JSON(200, gin.H{"success": true})
+}
+
+func GetSearchStatsHandler(c *gin.Context) {
+	stats, err := database.GetSearchStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	total, today, week, _ := database.GetSearchTotal()
+	c.JSON(200, gin.H{
+		"success": true,
+		"data": gin.H{
+			"stats": stats,
+			"total": total,
+			"today": today,
+			"week":  week,
+		},
+	})
+}
+
+// ==================== Affiliate 批量导入 ====================
+
+func BatchAddAffiliatesHandler(c *gin.Context) {
+	var affiliates []types.Affiliate
+	if err := c.ShouldBindJSON(&affiliates); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	count, err := database.BatchAddAffiliates(affiliates)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("成功导入 %d 条 Affiliate 记录", count),
+		"data":    gin.H{"count": count},
+	})
+}
+
+// ==================== 工具提交 ====================
+
+func AddToolSubmissionHandler(c *gin.Context) {
+	var s types.ToolSubmission
+	if err := c.ShouldBindJSON(&s); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	if s.Name == "" || s.Url == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": "名称和URL不能为空"})
+		return
+	}
+
+	id, err := database.AddToolSubmission(s)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "提交成功，等待审核",
+		"data":    gin.H{"id": id},
+	})
+}
+
+func GetToolSubmissionsHandler(c *gin.Context) {
+	submissions, err := database.GetToolSubmissions()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"success": true, "data": submissions})
+}
+
+func UpdateToolSubmissionStatusHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": "无效的ID"})
+		return
+	}
+
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	if err := database.UpdateToolSubmissionStatus(id, body.Status); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"success": true, "message": "状态更新成功"})
+}
+
+func DeleteToolSubmissionHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "errorMessage": "无效的ID"})
+		return
+	}
+
+	if err := database.DeleteToolSubmission(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"success": true, "message": "删除成功"})
+}
+
+// ==================== SEO: Sitemap & Robots ====================
+
+func SitemapHandler(c *gin.Context) {
+	tools := service.GetAllTool()
+	setting := service.GetSetting()
+
+	host := c.Request.Host
+	scheme := "https"
+	if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+		scheme = "http"
+	}
+	baseUrl := scheme + "://" + host
+
+	xml := `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>` + baseUrl + `/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>`
+
+	_ = setting
+	for _, t := range tools {
+		xml += `
+  <url>
+    <loc>` + baseUrl + `/tool/` + strconv.Itoa(t.Id) + `</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`
+	}
+
+	xml += `
+</urlset>`
+
+	c.Data(http.StatusOK, "application/xml; charset=utf-8", []byte(xml))
+}
+
+func RobotsTxtHandler(c *gin.Context) {
+	host := c.Request.Host
+	scheme := "https"
+	if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+		scheme = "http"
+	}
+	baseUrl := scheme + "://" + host
+
+	txt := `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /api/
+
+Sitemap: ` + baseUrl + `/sitemap.xml`
+
+	c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(txt))
+}
+
+func ToolPageHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
+
+	tools := service.GetAllTool()
+	var tool *types.Tool
+	for i := range tools {
+		if tools[i].Id == id {
+			tool = &tools[i]
+			break
+		}
+	}
+	if tool == nil {
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
+
+	setting := service.GetSetting()
+	siteTitle := setting.Title
+	if siteTitle == "" {
+		siteTitle = "AI Nav"
+	}
+
+	title := tool.Name + " - " + siteTitle
+	desc := tool.Desc
+	if desc == "" {
+		desc = tool.Name + " - AI工具导航"
+	}
+
+	html := `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>` + title + `</title>
+  <meta name="description" content="` + desc + `" />
+  <meta property="og:title" content="` + title + `" />
+  <meta property="og:description" content="` + desc + `" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="` + title + `" />
+  <meta name="twitter:description" content="` + desc + `" />
+  <link rel="icon" href="/favicon.ico" />
+  <script>window.location.replace('/');</script>
+</head>
+<body>
+  <h1>` + tool.Name + `</h1>
+  <p>` + desc + `</p>
+  <p>分类: ` + tool.Catelog + `</p>
+  <a href="` + tool.Url + `">访问 ` + tool.Name + `</a>
+</body>
+</html>`
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+}
+
+func ActivateAffiliateHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "无效的ID",
+		})
+		return
+	}
+
+	err = database.ActivateAffiliate(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "Affiliate 链接已激活，工具 URL 已替换",
 	})
 }

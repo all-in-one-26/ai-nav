@@ -16,6 +16,10 @@ const Catelog = React.lazy(() => import('./pages/admin/tabs/Catelog').then(modul
 const ApiToken = React.lazy(() => import('./pages/admin/tabs/ApiToken').then(module => ({ default: module.ApiToken })));
 const Setting = React.lazy(() => import('./pages/admin/tabs/Setting').then(module => ({ default: module.Setting })));
 const SearchEngine = React.lazy(() => import('./pages/admin/tabs/Search'));
+const Affiliate = React.lazy(() => import('./pages/admin/tabs/Affiliate'));
+const Analytics = React.lazy(() => import('./pages/admin/tabs/Analytics'));
+const Submissions = React.lazy(() => import('./pages/admin/tabs/Submissions'));
+const Submit = React.lazy(() => import('./pages/Submit'));
 
 // 加载中的占位组件
 const LoadingFallback = () => {
@@ -68,6 +72,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/submit" element={<Submit />} />
             <Route path="/admin" element={<AdminPage />}>
               <Route index element={<Tools />} />
               <Route path="tools" element={<Tools />} />
@@ -75,6 +80,9 @@ function App() {
               <Route path="search-engines" element={<SearchEngine />} />
               <Route path="api-token" element={<ApiToken />} />
               <Route path="settings" element={<Setting />} />
+              <Route path="affiliate" element={<Affiliate />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="submissions" element={<Submissions />} />
             </Route>
           </Routes>
         </Suspense>

@@ -17,8 +17,8 @@ const setJumpTarget = (target: JumpTarget) => {
   window.localStorage.setItem('jumpTarget', target);
 }
 
-export const getJumpTarget = () => {
-  return window.localStorage.getItem('jumpTarget') as JumpTarget;
+export const getJumpTarget = (): JumpTarget => {
+  return (window.localStorage.getItem('jumpTarget') as JumpTarget) || 'blank';
 }
 
 

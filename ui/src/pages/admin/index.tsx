@@ -9,6 +9,9 @@ import {
   BackpackIcon,
   TableIcon,
   MagnifyingGlassIcon,
+  Link2Icon,
+  BarChartIcon,
+  PaperPlaneIcon,
 } from '@radix-ui/react-icons';
 import { useOnce } from '../../utils/useOnce';
 
@@ -36,6 +39,24 @@ const menuItems: MenuItem[] = [
     icon: <StarFilledIcon className="w-5 h-5" />,
     label: 'API Token',
     path: '/admin/api-token'
+  },
+  {
+    key: 'analytics',
+    icon: <BarChartIcon className="w-5 h-5" />,
+    label: '数据分析',
+    path: '/admin/analytics'
+  },
+  {
+    key: 'affiliate',
+    icon: <Link2Icon className="w-5 h-5" />,
+    label: 'Affiliate 管理',
+    path: '/admin/affiliate'
+  },
+  {
+    key: 'submissions',
+    icon: <PaperPlaneIcon className="w-5 h-5" />,
+    label: '工具提交审核',
+    path: '/admin/submissions'
   },
   {
     key: 'settings',
@@ -78,7 +99,7 @@ export const AdminPage = () => {
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">VanNav 管理系统</h1>
+              <h1 className="text-xl font-semibold text-gray-900">AI Nav 管理系统</h1>
             </div>
 
             <div className="flex items-center space-x-4">

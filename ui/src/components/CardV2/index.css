@@ -72,6 +72,67 @@ body.dark-mode .card-index {
     height: 24px;
 }
 
+/* Icon fallback */
+.card-icon-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+}
+
+/* Favorite button */
+.card-fav {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  z-index: 2;
+  opacity: 0;
+  transition: all 0.15s;
+  line-height: 1;
+  padding: 2px;
+}
+.card-box:hover .card-fav {
+  opacity: 0.6;
+}
+.card-fav:hover {
+  opacity: 1 !important;
+  transform: scale(1.2);
+}
+.card-fav-active {
+  color: #ef4444 !important;
+  opacity: 1 !important;
+}
+
+/* Description styling */
+.desc-main {
+    display: block;
+    margin-bottom: 6px;
+}
+.desc-price {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #10b981;
+    background: #ecfdf5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 2px;
+}
+body.dark-mode .desc-price {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+}
+
 /* 确保card-left有相对定位以便加载指示器正确显示 */
 .card-left {
     position: relative;

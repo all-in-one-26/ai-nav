@@ -18,3 +18,16 @@
 .tag-selector {
   width: 100%;
 }
+.tag-menu-btn {
+  background-color: #4a7dff !important;
+  color: #fff !important;
+  border-color: #4a7dff !important;
+  font-weight: 500;
+}
+.tag-menu-btn:hover {
+  background-color: #3a6ae0 !important;
+  border-color: #3a6ae0 !important;
+}
+.tag-emoji {
+  margin-right: 3px;
+}

@@ -69,6 +69,9 @@ func main() {
 	//router.Use(gzip.Gzip(gzip.DefaultCompression))
 	// 嵌入文件夹
 	router.GET("/manifest.json", handler.ManifastHanlder)
+	router.GET("/sitemap.xml", handler.SitemapHandler)
+	router.GET("/robots.txt", handler.RobotsTxtHandler)
+	router.GET("/tool/:id", handler.ToolPageHandler)
 	router.Use(Serve("/", BinaryFileSystem(fs, "public")))
 	api := router.Group("/api")
 	{
@@ -82,6 +85,15 @@ func main() {
 		
 		// 获取启用的搜索引擎（公开接口）
 		api.GET("/searchEngines", handler.GetEnabledSearchEnginesHandler)
+
+		// 点击追踪（公开接口，无需登录）
+		api.POST("/click", handler.RecordClickHandler)
+
+		// 搜索日志（公开接口）
+		api.POST("/search", handler.RecordSearchHandler)
+
+		// 工具提交（公开接口）
+		api.POST("/submit", handler.AddToolSubmissionHandler)
 		
 		// 管理员用的
 		admin := api.Group("/admin")
@@ -116,6 +128,25 @@ func main() {
 			admin.PUT("/searchEngine/:id", handler.UpdateSearchEngineHandler)
 			admin.DELETE("/searchEngine/:id", handler.DeleteSearchEngineHandler)
 			admin.PUT("/searchEngines/sort", handler.UpdateSearchEngineSortHandler)
+
+			// 点击统计（管理员接口）
+			admin.GET("/clicks", handler.GetClickStatsHandler)
+
+			// 搜索统计（管理员接口）
+			admin.GET("/searches", handler.GetSearchStatsHandler)
+
+			// 工具提交管理
+			admin.GET("/submissions", handler.GetToolSubmissionsHandler)
+			admin.PUT("/submission/:id", handler.UpdateToolSubmissionStatusHandler)
+			admin.DELETE("/submission/:id", handler.DeleteToolSubmissionHandler)
+
+			// Affiliate 管理路由
+			admin.GET("/affiliate", handler.GetAllAffiliatesHandler)
+			admin.POST("/affiliate", handler.AddAffiliateHandler)
+			admin.PUT("/affiliate/:id", handler.UpdateAffiliateHandler)
+			admin.DELETE("/affiliate/:id", handler.DeleteAffiliateHandler)
+			admin.POST("/affiliate/activate/:id", handler.ActivateAffiliateHandler)
+			admin.POST("/affiliate/batch", handler.BatchAddAffiliatesHandler)
 		}
 	}
 	logger.LogInfo("应用启动成功，网址: http://localhost:%s", *port)

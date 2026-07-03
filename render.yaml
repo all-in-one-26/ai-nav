@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ai-nav
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: TZ
+        value: Asia/Shanghai
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1
